@@ -1,6 +1,8 @@
 from dotenv import load_dotenv
 from langchain.chains.retrieval import create_retrieval_chain
-from openai import embeddings
+from langchain_core.prompts import PromptTemplate
+from langchain_core.runnables import RunnablePassthrough
+from openai import embeddings, vector_stores
 
 load_dotenv()
 
@@ -13,35 +15,56 @@ from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
 INDEX_NAME = "document-reader"
 
+def format_docs(docs):
+    print(docs)
+    return "\n\n".join(doc.page_content for doc in docs)
+
+
 def run_llm(query: str):
     embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
     docsearch = PineconeVectorStore(index_name=INDEX_NAME, embedding=embeddings)
-    chat = ChatOpenAI(verbose=True, temperature=0)
+    llm = ChatOpenAI(verbose=True, temperature=0)
 
-    retrival_qa_chat_prompt = hub.pull("langchain-ai/retrieval-qa-chat")
+    #retrival_qa_chat_prompt = hub.pull("langchain-ai/retrieval-qa-chat")
 
-    # retrival_qa_chat_prompt.messages[0].prompt.template = (
-    #     "You are a helpful and professional customer service representative. "
-    #     "Answer questions politely and clearly using the retrieved documents below.\n\n"
-    #     "Always display the item_id"
-    #     "If the answer isn't found in the documents, say 'I'm sorry, I couldn't find that information.'"
+    # stuff_documents_chain = create_stuff_documents_chain(llm, retrival_qa_chat_prompt)
+    #
+    # qa = create_retrieval_chain(
+    #     retriever=docsearch.as_retriever(),combine_docs_chain=stuff_documents_chain
     # )
+    #
+    # result= qa.invoke(input={"input":query})
 
-    stuff_documents_chain = create_stuff_documents_chain(chat, retrival_qa_chat_prompt)
+    #custom user prompt
+    template = """ Use the following pieces of context to answer the question at the end.
+     if you don't know the answer, just say that you dont know, don't try to make up an answer.
+     use three sentences maximum and keep the answer as concise as possible.
+     always say "thanks for asking" at the end o the answer
 
-    qa = create_retrieval_chain(
-        retriever=docsearch.as_retriever(),combine_docs_chain=stuff_documents_chain
+      {context}
+
+      question:{question}
+
+      Helpful Answer: 
+      """
+
+
+    custom_rag_prompt = PromptTemplate.from_template(template)
+    rag_chain = (
+        {"context": docsearch.as_retriever() | format_docs, "question": RunnablePassthrough()}
+        | custom_rag_prompt
+        | llm
     )
 
-    result= qa.invoke(input={"input":query})
+    result = rag_chain.invoke(query)
 
-    new_result = {
-    "query": result["input"],
-    "result": result["answer"],
-    "source_document":result["context"]
-    }
+    # new_result = {
+    # "query": result["input"],
+    # "result": result["answer"],
+    # "source_document":result["context"]
+    # }
 
-    return new_result
+    return result
 
 
 # if __name__ == "__main__":

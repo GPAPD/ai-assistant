@@ -15,8 +15,11 @@ def chat(query: Query):
     user_message = query.message
     res = run_llm(query=user_message)
 
-    return {
-        "query": res["query"],
-        "response": res["result"],
-        "source_document": res["source_document"]
-    }
+    return res
+
+    # return {
+    #     # "query": res["query"],
+    #     # "response": res["result"],
+    #     # "source_document": res["source_document"]
+    #
+    # }
