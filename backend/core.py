@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 from langchain.chains.retrieval import create_retrieval_chain
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnablePassthrough
+from langchain_ollama import ChatOllama
 from openai import embeddings, vector_stores
 
 load_dotenv()
@@ -23,7 +24,8 @@ def format_docs(docs):
 def run_llm(query: str):
     embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
     docsearch = PineconeVectorStore(index_name=INDEX_NAME, embedding=embeddings)
-    llm = ChatOpenAI(verbose=True, temperature=0)
+    #llm = ChatOpenAI(verbose=True, temperature=0)
+    llm = ChatOllama(model="llama3")
 
     #retrival_qa_chat_prompt = hub.pull("langchain-ai/retrieval-qa-chat")
 
@@ -37,7 +39,7 @@ def run_llm(query: str):
 
     #custom user prompt
     template = """ Use the following pieces of context to answer the question at the end.
-     if you don't know the answer, just say that you dont know, don't try to make up an answer.
+     if you don't know the answer, just say that you dont know or we do sell that item, don't try to make up an answer.
      use three sentences maximum and keep the answer as concise as possible.
      always say "thanks for asking" at the end o the answer
 
@@ -58,13 +60,12 @@ def run_llm(query: str):
 
     result = rag_chain.invoke(query)
 
-    # new_result = {
-    # "query": result["input"],
-    # "result": result["answer"],
-    # "source_document":result["context"]
-    # }
+    new_result = {
+    "query": query,
+    "result": result,
+    }
 
-    return result
+    return new_result
 
 
 # if __name__ == "__main__":
