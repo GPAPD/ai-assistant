@@ -62,12 +62,7 @@ def run_llm(query: str):
 
     new_result = {
     "query": query,
-    "result": result,
+    "result": result["result"],
     }
 
     return new_result
-
-
-# if __name__ == "__main__":
-#     res = run_llm(query="What is the cheapest item you have?")
-#     print(res["result"])

@@ -8,6 +8,7 @@ langchain = "*"
 uvicorn = "*"
 pypdf = "*"
 faiss-cpu = "*"
+streamlit = "*"
 
 [dev-packages]
 
