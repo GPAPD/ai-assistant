@@ -22,5 +22,5 @@ def chat(query: Query):
 
     return {
         "query": res["query"],
-        "response": res["result"].content
+        "response": res["result"]
     }

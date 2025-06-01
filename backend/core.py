@@ -1,3 +1,5 @@
+from typing import List, Dict, Any
+
 from dotenv import load_dotenv
 from langchain.chains.retrieval import create_retrieval_chain
 from langchain_core.prompts import PromptTemplate
@@ -21,7 +23,7 @@ def format_docs(docs):
     return "\n\n".join(doc.page_content for doc in docs)
 
 
-def run_llm(query: str):
+def run_llm(query: str, chat_history: List[Dict[str,Any]]=[]):
     embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
     docsearch = PineconeVectorStore(index_name=INDEX_NAME, embedding=embeddings)
     #llm = ChatOpenAI(verbose=True, temperature=0)
@@ -43,26 +45,55 @@ def run_llm(query: str):
      use three sentences maximum and keep the answer as concise as possible.
      always say "thanks for asking" at the end o the answer
 
+      Chat history:
+      {chat_history}
+    
+      Context:
       {context}
-
-      question:{question}
+    
+      Question: {question}
 
       Helpful Answer: 
       """
 
+    def format_chat_history(chat_history: List[Dict[str, Any]]) -> str:
+        if not chat_history:
+            return ""
+
+        history = ""
+        for turn in chat_history:
+            if isinstance(turn, dict):  # ✅ Make sure it's a dict
+                user = turn.get("user", "")
+                assistant = turn.get("assistant", "")
+                history += f"User: {user}\nAssistant: {assistant}\n"
+            else:
+                history += f"{turn}\n"  # fallback if it's malformed
+        return history.strip()
 
     custom_rag_prompt = PromptTemplate.from_template(template)
+
     rag_chain = (
-        {"context": docsearch.as_retriever() | format_docs, "question": RunnablePassthrough()}
+        {
+            "context": docsearch.as_retriever() | format_docs,
+            "question": RunnablePassthrough(),
+            "chat_history": lambda x: format_chat_history(chat_history),
+        }
         | custom_rag_prompt
         | llm
     )
+
+    # custom_rag_prompt = PromptTemplate.from_template(template)
+    # rag_chain = (
+    #     {"context": docsearch.as_retriever() | format_docs, "question": RunnablePassthrough()}
+    #     | custom_rag_prompt
+    #     | llm
+    # )
 
     result = rag_chain.invoke(query)
 
     new_result = {
     "query": query,
-    "result": result["result"],
+    "result": result.content,
     }
 
     return new_result
