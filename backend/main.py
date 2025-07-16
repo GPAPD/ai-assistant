@@ -2,12 +2,14 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from backend.core import run_llm
 from backend.ingestion import ingest_docs
+from prediction import predict_rev, PredictionInput
 
 # Create FastAPI app
 app = FastAPI()
 
 class Query(BaseModel):
     message: str
+
 
 @app.post("/update-faiss")
 def update_faiss():
@@ -23,4 +25,12 @@ def chat(query: Query):
     return {
         "query": res["query"],
         "response": res["result"]
+    }
+#
+@app.post('/predict')
+def predict(data: PredictionInput):
+    res =  predict_rev(data)
+
+    return {
+        "res": res
     }
