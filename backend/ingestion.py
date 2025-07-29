@@ -10,6 +10,7 @@ from langchain_community.document_loaders import ReadTheDocsLoader
 from langchain_community.document_loaders import CSVLoader
 from langchain_openai import OpenAIEmbeddings
 from langchain_pinecone import PineconeVectorStore
+from pinecone import Pinecone
 
 
 def ingest_docs():
@@ -32,11 +33,22 @@ def ingest_docs():
 
     embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
 
+    pinecone_api_key = os.getenv("PINECONE_API_KEY")
+    pc = Pinecone(api_key=pinecone_api_key)
+    index_name = "document-reader"
+
+    # Get the index
+    index = pc.Index(index_name)
+
+    # ✅ Delete all existing vectors
+    index.delete(delete_all=True)
+
+
     PineconeVectorStore.from_documents(
         documents=documents,embedding=embeddings,index_name="document-reader"
     )
     print("************* Loading to vectorstore done *************")
-
+    return True
 
 # if __name__ == "__main__":
 #     ingest_docs()

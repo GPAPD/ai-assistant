@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from backend.core import run_llm
 from backend.semantic_search import search_item
 from backend.ingestion import ingest_docs
-from prediction import predict_rev, PredictionInput
+from backend.prediction import predict_rev, PredictionInput
 
 # Create FastAPI app
 app = FastAPI()
@@ -13,10 +13,12 @@ class Query(BaseModel):
     message: str
 
 
-@app.post("/update-faiss")
-def update_faiss():
-    ingest_docs()
-    return True
+@app.post("/vcDatabase")
+def update_vector_database():
+    res = ingest_docs()
+    return {
+        "Result":res
+    }
 
 # send query to the LLM
 @app.post("/chat")
@@ -41,6 +43,4 @@ def predict(data: PredictionInput):
 @app.post('/semanticSearch')
 def get_top_results(query: Query):
     res = search_item(query.message)
-    return {
-        "res": res
-    }
+    return  res

@@ -1,4 +1,5 @@
 import numpy as np
+import os
 import pandas as pd
 from flask import Flask, request, jsonify
 import joblib
@@ -21,7 +22,10 @@ class PredictionInput(BaseModel):
 
 
 # Load your trained model
-model = joblib.load('DataModel/supplemet_revenue_predictor.pkl')
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "DataModel", "supplemet_revenue_predictor.pkl")
+
+model = joblib.load(MODEL_PATH)
 
 # Define the expected features (same order used in training!)
 FEATURES = [
