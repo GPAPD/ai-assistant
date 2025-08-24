@@ -5,9 +5,20 @@ from backend.core import run_llm
 from backend.semantic_search import search_item
 from backend.ingestion import ingest_docs
 from backend.prediction import predict_rev, PredictionInput
+from fastapi.middleware.cors import CORSMiddleware
 
 # Create FastAPI app
 app = FastAPI()
+
+# Allow all origins (not secure for production)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Or specific origins
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 class Query(BaseModel):
     message: str
