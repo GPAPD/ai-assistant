@@ -40,21 +40,25 @@ def run_llm(query: str, chat_history: List[Dict[str,Any]]=[]):
     # result= qa.invoke(input={"input":query})
 
     #custom user prompt
-    template = """ Use the following pieces of context to answer the question at the end.
-     if you don't know the answer, just say that you dont know or we do sell that item, don't try to make up an answer.
-     use three sentences maximum and keep the answer as concise as possible.
-     always say "thanks for asking" at the end o the answer
+    template = """
+    You are a Smart E-Commerce Assistant. Use the following context to answer the customer's question.
 
-      Chat history:
-      {chat_history}
-    
-      Context:
-      {context}
-    
-      Question: {question}
+    Rules:
+    - If you don't know the answer or we don't sell that item, reply: "I'm sorry, I couldn't find that information."
+    - Keep answers concise (maximum three sentences).
+    - Always include item_id,Name for products when available.
+    - Always end the answer with: "Thanks for asking."
 
-      Helpful Answer: 
-      """
+    Chat history:
+    {chat_history}
+
+    Context:
+    {context}
+
+    Question: {question}
+
+    Helpful Answer:
+    """
 
     def format_chat_history(chat_history: List[Dict[str, Any]]) -> str:
         if not chat_history:

@@ -1,52 +1,28 @@
-from watchdog.observers import Observer
-
-#from backend.core import run_llm
-from backend.core import run_llm
 import streamlit as st
+from backend.core import run_llm  # your LLM call function
 
-st.header("Ai conventional chat ")
 
-prompt = st.text_input("Prompt",placeholder="enter your prompt...")
+# Header
+st.title("AI Assistant")
+st.caption("Ask anything and get smart, context-aware answers.")
 
-if "chat_answer_history" not in st.session_state:
-    st.session_state["chat_answer_history"] = []
-
-if "user_prompt_history" not in st.session_state:
-    st.session_state["user_prompt_history"] = []
-
+# Session State Init
 if "chat_history" not in st.session_state:
-    st.session_state["chat_history"] = []
+    st.session_state["chat_history"] = []  # list of {"user": ..., "assistant": ...}
 
+# Chat Input
+user_input = st.chat_input("Type your message here...")
 
-# def crete_source_string(source_urls: set[str]) -> set:
-#     if not source_urls:
-#         return ""
-#     source_list = list(source_urls)
-#     source_list.sort()
-#     source_string = "sources:\n"
-#     for i, source in enumerate(source_list):
-#         source_string += f"{i+1}.{source}\n"
-#     return source_string
+if user_input:
+    with st.spinner("Generating response..."):
+        # Call your LLM
+        response = run_llm(query=user_input, chat_history=st.session_state["chat_history"])
+        answer = response.get("result", "I'm sorry, I couldn't find that information.")
 
+    # Append to history
+    st.session_state["chat_history"].append({"user": user_input, "assistant": answer})
 
-if prompt:
-    with st.spinner("Generating response.."):
-        generate_response = run_llm(query=prompt, chat_history=st.session_state["chat_history"])
-
-    formatted_response = (
-        f"{generate_response['result']} \n\n"
-    )
-
-    st.session_state["user_prompt_history"].append(prompt)
-    st.session_state["chat_answer_history"].append(formatted_response)
-
-    st.session_state["chat_history"].append({
-        "user": prompt,
-        "assistant": generate_response["result"]
-    })
-
-
-if st.session_state["chat_answer_history"]:
-    for generate_response, user_query in zip(st.session_state["chat_answer_history"],st.session_state["user_prompt_history"]):
-       st.chat_message("user").write(user_query)
-       st.chat_message("assistant").write(generate_response)
+# Chat Display
+for chat in st.session_state["chat_history"]:
+    st.chat_message("user").write(chat["user"])
+    st.chat_message("assistant").write(chat["assistant"])

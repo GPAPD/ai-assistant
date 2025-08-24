@@ -23,6 +23,11 @@ app.add_middleware(
 class Query(BaseModel):
     message: str
 
+@app.get("/")
+def index():
+    return {
+        "Hello Akash"
+    }
 
 @app.post("/vcDatabase")
 def update_vector_database():
