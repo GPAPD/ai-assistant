@@ -7,7 +7,6 @@ from typing import List, Dict, Any
 from langchain.chains.retrieval import create_retrieval_chain
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnablePassthrough
-from langchain_ollama import ChatOllama
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_pinecone import PineconeVectorStore
 
@@ -110,3 +109,4 @@ if user_input:
 for chat in st.session_state["chat_history"]:
     st.chat_message("user").write(chat["user"])
     st.chat_message("assistant").write(chat["assistant"])
+
