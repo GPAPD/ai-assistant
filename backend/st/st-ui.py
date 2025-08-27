@@ -15,12 +15,12 @@ from langchain_pinecone import PineconeVectorStore
 # ==============================
 OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
 PINECONE_API_KEY = st.secrets["PINECONE_API_KEY"]
-PINECONE_ENVIRONMENT = st.secrets["PINECONE_ENVIRONMENT"]
+##PINECONE_ENVIRONMENT = st.secrets["PINECONE_ENVIRONMENT"]
 
 # Set env variables so LangChain + Pinecone can see them
 os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
 os.environ["PINECONE_API_KEY"] = PINECONE_API_KEY
-os.environ["PINECONE_ENVIRONMENT"] = PINECONE_ENVIRONMENT
+#os.environ["PINECONE_ENVIRONMENT"] = PINECONE_ENVIRONMENT
 
 INDEX_NAME = "document-reader"
 
@@ -109,4 +109,5 @@ if user_input:
 for chat in st.session_state["chat_history"]:
     st.chat_message("user").write(chat["user"])
     st.chat_message("assistant").write(chat["assistant"])
+
 
