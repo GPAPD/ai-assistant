@@ -51,7 +51,7 @@ def run_llm(query: str, chat_history: List[Dict[str, Any]]=[]):
     You are a Smart E-Commerce Assistant. Use the following context to answer the customer's question.
 
     Rules:
-    - If you don't know the answer or we don't sell that item, reply: "I'm sorry, I couldn't find that information."
+    - If you don't know the answer or we don't sell that item, reply: "I'm sorry, I couldn't find that information or say we don't sell that item in our site."
     - Keep answers concise (maximum three sentences).
     - Always include item_id, Name for products when available.
     - Always end the answer with: "Thanks for asking."
@@ -109,5 +109,6 @@ if user_input:
 for chat in st.session_state["chat_history"]:
     st.chat_message("user").write(chat["user"])
     st.chat_message("assistant").write(chat["assistant"])
+
 
 
