@@ -6,6 +6,9 @@ name = "pypi"
 [packages]
 langchain = "*"
 uvicorn = "*"
+pypdf = "*"
+faiss-cpu = "*"
+streamlit = "*"
 
 [dev-packages]
 

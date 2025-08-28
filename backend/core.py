@@ -1,6 +1,11 @@
+from typing import List, Dict, Any
+
 from dotenv import load_dotenv
 from langchain.chains.retrieval import create_retrieval_chain
-from openai import embeddings
+from langchain_core.prompts import PromptTemplate
+from langchain_core.runnables import RunnablePassthrough
+from langchain_ollama import ChatOllama
+from openai import embeddings, vector_stores
 
 load_dotenv()
 
@@ -13,37 +18,88 @@ from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
 INDEX_NAME = "document-reader"
 
-def run_llm(query: str):
+def format_docs(docs):
+    print(docs)
+    return "\n\n".join(doc.page_content for doc in docs)
+
+
+def run_llm(query: str, chat_history: List[Dict[str,Any]]=[]):
     embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
     docsearch = PineconeVectorStore(index_name=INDEX_NAME, embedding=embeddings)
-    chat = ChatOpenAI(verbose=True, temperature=0)
+    #llm = ChatOpenAI(verbose=True, temperature=0)
+    llm = ChatOllama(model="llama3")
 
-    retrival_qa_chat_prompt = hub.pull("langchain-ai/retrieval-qa-chat")
+    #retrival_qa_chat_prompt = hub.pull("langchain-ai/retrieval-qa-chat")
 
-    # retrival_qa_chat_prompt.messages[0].prompt.template = (
-    #     "You are a helpful and professional customer service representative. "
-    #     "Answer questions politely and clearly using the retrieved documents below.\n\n"
-    #     "Always display the item_id"
-    #     "If the answer isn't found in the documents, say 'I'm sorry, I couldn't find that information.'"
+    # stuff_documents_chain = create_stuff_documents_chain(llm, retrival_qa_chat_prompt)
+    #
+    # qa = create_retrieval_chain(
+    #     retriever=docsearch.as_retriever(),combine_docs_chain=stuff_documents_chain
     # )
+    #
+    # result= qa.invoke(input={"input":query})
 
-    stuff_documents_chain = create_stuff_documents_chain(chat, retrival_qa_chat_prompt)
+    #custom user prompt
+    template = """
+    You are a Smart E-Commerce Assistant. Use the following context to answer the customer's question.
 
-    qa = create_retrieval_chain(
-        retriever=docsearch.as_retriever(),combine_docs_chain=stuff_documents_chain
+    Rules:
+    - If you don't know the answer or we don't sell that item, reply: "I'm sorry, I couldn't find that information."
+    - Keep answers concise (maximum three sentences).
+    - Always include item_id,Name for products when available.
+    - Always end the answer with: "Thanks for asking."
+
+    Chat history:
+    {chat_history}
+
+    Context:
+    {context}
+
+    Question: {question}
+
+    Helpful Answer:
+    """
+
+    def format_chat_history(chat_history: List[Dict[str, Any]]) -> str:
+        if not chat_history:
+            return ""
+
+        history = ""
+        for turn in chat_history:
+            if isinstance(turn, dict):  # ✅ Make sure it's a dict
+                user = turn.get("user", "")
+                assistant = turn.get("assistant", "")
+                history += f"User: {user}\nAssistant: {assistant}\n"
+            else:
+                history += f"{turn}\n"  # fallback if it's malformed
+        return history.strip()
+
+    custom_rag_prompt = PromptTemplate.from_template(template)
+
+    rag_chain = (
+        {
+            "context": docsearch.as_retriever() | format_docs,
+            "question": RunnablePassthrough(),
+            "chat_history": lambda x: format_chat_history(chat_history),
+        }
+        | custom_rag_prompt
+        | llm
     )
 
-    result= qa.invoke(input={"input":query})
+    # custom_rag_prompt = PromptTemplate.from_template(template)
+    # rag_chain = (
+    #     {"context": docsearch.as_retriever() | format_docs, "question": RunnablePassthrough()}
+    #     | custom_rag_prompt
+    #     | llm
+    # )
+
+    ## test
+
+    result = rag_chain.invoke(query)
 
     new_result = {
-    "query": result["input"],
-    "result": result["answer"],
-    "source_document":result["context"]
+    "query": query,
+    "result": result.content,
     }
 
     return new_result
-
-
-# if __name__ == "__main__":
-#     res = run_llm(query="What is the cheapest item you have?")
-#     print(res["result"])
