@@ -27,7 +27,10 @@ def run_llm(query: str, chat_history: List[Dict[str,Any]]=[]):
     embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
     docsearch = PineconeVectorStore(index_name=INDEX_NAME, embedding=embeddings)
     #llm = ChatOpenAI(verbose=True, temperature=0)
-    llm = ChatOllama(model="llama3")
+    llm = ChatOpenAI(
+        model="gpt-4o-mini",  # or "gpt-4o", "gpt-3.5-turbo", etc.
+        temperature=0,  # adjust creativity
+    )
 
     #retrival_qa_chat_prompt = hub.pull("langchain-ai/retrieval-qa-chat")
 
@@ -36,7 +39,7 @@ def run_llm(query: str, chat_history: List[Dict[str,Any]]=[]):
     # qa = create_retrieval_chain(
     #     retriever=docsearch.as_retriever(),combine_docs_chain=stuff_documents_chain
     # )
-    #
+    #     - If you don't know the answer : "I'm sorry, I couldn't find that information."
     # result= qa.invoke(input={"input":query})
 
     #custom user prompt
@@ -44,7 +47,7 @@ def run_llm(query: str, chat_history: List[Dict[str,Any]]=[]):
     You are a Smart E-Commerce Assistant. Use the following context to answer the customer's question.
 
     Rules:
-    - If you don't know the answer or we don't sell that item, reply: "I'm sorry, I couldn't find that information."
+
     - Keep answers concise (maximum three sentences).
     - Always include item_id,Name for products when available.
     - Always end the answer with: "Thanks for asking."
@@ -66,7 +69,7 @@ def run_llm(query: str, chat_history: List[Dict[str,Any]]=[]):
 
         history = ""
         for turn in chat_history:
-            if isinstance(turn, dict):  # ✅ Make sure it's a dict
+            if isinstance(turn, dict):
                 user = turn.get("user", "")
                 assistant = turn.get("assistant", "")
                 history += f"User: {user}\nAssistant: {assistant}\n"

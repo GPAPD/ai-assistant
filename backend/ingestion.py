@@ -40,7 +40,7 @@ def ingest_docs():
     # Get the index
     index = pc.Index(index_name)
 
-    # ✅ Delete all existing vectors
+    # Delete all existing vectors
     index.delete(delete_all=True)
 
 
